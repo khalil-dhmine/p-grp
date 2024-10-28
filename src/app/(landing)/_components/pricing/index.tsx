@@ -2,7 +2,7 @@ import BackdropGradient from "@/components/global/backdrop-gradient"
 import GradientText from "@/components/global/gradient-text"
 import { Button } from "@/components/ui/button"
 import { Card, CardDescription, CardTitle } from "@/components/ui/card"
-import { Check } from "@/icons"
+import { ArrowBigRightDash } from "lucide-react"
 import Link from "next/link"
 
 type Props = {}
@@ -39,26 +39,30 @@ export const PricingSection = (props: Props) => {
           </Link>
         </div>
         <div className="flex flex-col gap-2 text-[#B4B0AE] mt-5">
-          <p>Features</p>
+          {/* <p>Features</p> */}
           <span className="flex gap-2 mt-3 items-center">
-            <Check />
-            Feature number 1
+            <ArrowBigRightDash />
+            Advanced Analytics and Insights
           </span>
           <span className="flex gap-2 items-center">
-            <Check />
-            Feature number 1
+            {/* <Check /> */}
+            <ArrowBigRightDash />
+            Community-Driven Course Creation
           </span>
           <span className="flex gap-2 items-center">
-            <Check />
-            Feature number 1
+            {/* <Check /> */}
+            <ArrowBigRightDash />
+            Customizable User Profiles
           </span>
           <span className="flex gap-2 items-center">
-            <Check />
-            Feature number 1
+            {/* <Check /> */}
+            <ArrowBigRightDash />
+            Integrated Messaging and Notifications
           </span>
           <span className="flex gap-2 items-center">
-            <Check />
-            Feature number 1
+            {/* <Check /> */}
+            <ArrowBigRightDash />
+            Gamification with Achievements and Badges
           </span>
         </div>
       </Card>

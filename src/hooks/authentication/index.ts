@@ -1,4 +1,4 @@
-import { onSignUpUser } from "@/actions/auth"
+import { onSignInUser, onSignUpUser } from "@/actions/auth"
 import { SignUpSchema } from "@/components/forms/sign-up/schema"
 import { useSignIn, useSignUp } from "@clerk/nextjs"
 import { OAuthStrategy } from "@clerk/types"
@@ -10,6 +10,63 @@ import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
 import { SignInSchema } from "../../components/forms/sign-in/schema"
+
+// export const useAuthSignIn = () => {
+//   const { isLoaded, setActive, signIn } = useSignIn()
+//   const {
+//     register,
+//     formState: { errors },
+//     reset,
+//     handleSubmit,
+//   } = useForm<z.infer<typeof SignInSchema>>({
+//     resolver: zodResolver(SignInSchema),
+//     mode: "onBlur",
+//   })
+
+//   const router = useRouter()
+//   const onClerkAuth = async (email: string, password: string) => {
+//     if (!isLoaded)
+//       return toast("Error", {
+//         description: "Oops! something went wrong",
+//       })
+//     try {
+//       const authenticated = await signIn.create({
+//         identifier: email,
+//         password: password,
+//       })
+
+//       if (authenticated.status === "complete") {
+//         reset()
+//         await setActive({ session: authenticated.createdSessionId })
+//         toast("Success", {
+//           description: "Welcome back!",
+//         })
+//         router.push("/callback/sign-in")
+//       }
+//     } catch (error: any) {
+//       if (error.errors[0].code === "form_password_incorrect")
+//         toast("Error", {
+//           description: "email/password is incorrect try again",
+//         })
+//     }
+//   }
+
+//   const { mutate: InitiateLoginFlow, isPending } = useMutation({
+//     mutationFn: ({ email, password }: { email: string; password: string }) =>
+//       onClerkAuth(email, password),
+//   })
+
+//   const onAuthenticateUser = handleSubmit(async (values) => {
+//     InitiateLoginFlow({ email: values.email, password: values.password })
+//   })
+
+//   return {
+//     onAuthenticateUser,
+//     isPending,
+//     register,
+//     errors,
+//   }
+// }
 
 export const useAuthSignIn = () => {
   const { isLoaded, setActive, signIn } = useSignIn()
@@ -24,11 +81,15 @@ export const useAuthSignIn = () => {
   })
 
   const router = useRouter()
+
   const onClerkAuth = async (email: string, password: string) => {
-    if (!isLoaded)
-      return toast("Error", {
-        description: "Oops! something went wrong",
+    if (!isLoaded) {
+      toast("Error", {
+        description: "Authentication service not ready. Please try again.",
       })
+      return
+    }
+
     try {
       const authenticated = await signIn.create({
         identifier: email,
@@ -38,16 +99,60 @@ export const useAuthSignIn = () => {
       if (authenticated.status === "complete") {
         reset()
         await setActive({ session: authenticated.createdSessionId })
+
+        // Call your backend to get user data
+        const userData = await onSignInUser(authenticated.userId)
+
+        if (userData.status === 207) {
+          // User has groups, redirect to their first group
+          router.push(
+            `/group/${userData.groupId}/channel/${userData.channelId}`,
+          )
+        } else if (userData.status === 200) {
+          // User has no groups, redirect to create group
+          router.push("/group/create")
+        } else {
+          throw new Error(userData.message)
+        }
+
         toast("Success", {
           description: "Welcome back!",
         })
-        router.push("/callback/sign-in")
+      } else {
+        throw new Error("Authentication incomplete")
       }
     } catch (error: any) {
-      if (error.errors[0].code === "form_password_incorrect")
+      console.error("Sign in error:", error)
+
+      // Handle specific Clerk error codes
+      if (error.errors?.[0]) {
+        const errorCode = error.errors[0].code
+        switch (errorCode) {
+          case "form_password_incorrect":
+            toast("Error", {
+              description: "Email or password is incorrect",
+            })
+            break
+          case "form_identifier_not_found":
+            toast("Error", {
+              description: "No account found with this email",
+            })
+            break
+          case "form_code_incorrect":
+            toast("Error", {
+              description: "Invalid verification code",
+            })
+            break
+          default:
+            toast("Error", {
+              description: "Failed to sign in. Please try again.",
+            })
+        }
+      } else {
         toast("Error", {
-          description: "email/password is incorrect try again",
+          description: error.message || "Failed to sign in. Please try again.",
         })
+      }
     }
   }
 

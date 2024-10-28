@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { GROUPLE_CONSTANTS } from "@/constants"
 import { useAuthSignUp } from "@/hooks/authentication"
 import dynamic from "next/dynamic"
+import { toast } from "sonner"
 
 type Props = {}
 
@@ -15,7 +16,6 @@ const OtpInput = dynamic(
     ),
   { ssr: false },
 )
-
 const SignUpForm = (props: Props) => {
   const {
     register,
@@ -28,6 +28,20 @@ const SignUpForm = (props: Props) => {
     setCode,
     getValues,
   } = useAuthSignUp()
+
+  const handleGenerateCode = async () => {
+    const email = getValues("email")
+    const password = getValues("password")
+
+    if (!email || !password) {
+      toast("Error", {
+        description: "Email and Password cannot be empty.",
+      })
+      return
+    }
+
+    await onGenerateCode(email, password)
+  }
 
   return (
     <form
@@ -50,18 +64,17 @@ const SignUpForm = (props: Props) => {
       )}
 
       {verifying ? (
-        <Button type="submit" className="rounded-2xl">
-          <Loader loading={creating}>Sign Up with Email</Loader>
+        <Button type="submit" className="rounded-2xl" disabled={creating}>
+          <Loader loading={creating}>Verify Code</Loader>
         </Button>
       ) : (
         <Button
           type="button"
           className="rounded-2xl"
-          onClick={() =>
-            onGenerateCode(getValues("email"), getValues("password"))
-          }
+          onClick={handleGenerateCode}
+          disabled={creating}
         >
-          <Loader loading={false}>Generate Code</Loader>
+          <Loader loading={creating}>Generate Code</Loader>
         </Button>
       )}
     </form>
